@@ -27,3 +27,12 @@ The current key code list follows:
 	// HIDD keycodes for GPD MicroPC
 	#define ACPI_NOTIFY_HIDD_BRIGHTNESS_UP      0x13
 	#define ACPI_NOTIFY_HIDD_BRIGHTNESS_DOWN    0x14
+
+# Installation
+
+This driver can be installed directly via 'make; make install', or as a port
+by changing into the *port* directory and doing the same thing; the latter,
+however, allowing you to set an option for evdev(4) support.
+
+Then add 'acpi_hidd_load="YES"' to /boot/loader.conf, and load the driver via
+'kldload acpi_hidd' (or a reboot).
