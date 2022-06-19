@@ -34,5 +34,8 @@ This driver can be installed directly via 'make; make install', or as a port
 by changing into the *port* directory and doing the same thing; the latter,
 however, allowing you to set an option for evdev(4) support.
 
+If you choose to use the port, you'll have to run 'make makesum' to produce
+the distfile before the port will build.
+
 Then add 'acpi_hidd_load="YES"' to /boot/loader.conf, and load the driver via
 'kldload acpi_hidd' (or a reboot).
