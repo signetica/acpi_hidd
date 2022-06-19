@@ -19,7 +19,7 @@ the two that are present on the GPD MicroPC.  This does not prevent use
 of the driver with devd(8), but contributions from users will make the
 driver more useful.  Inside the driver you'll find a list of key codes
 and the keys they represent.  Add your computer's codes to this list and
-leave your additions, and the make and model of your computer, as an
+leave your additions, the make, and model of your computer as an
 issue here on github.
 
 The current key code list follows:
