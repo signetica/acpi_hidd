@@ -61,7 +61,7 @@ struct acpi_hidd_softc {
     struct sysctl_ctx_list  hidd_sysctl_ctx;
 };
 
-// HIDD keycodes
+// HIDD keycodes for GPD MicroPC
 #define ACPI_NOTIFY_HIDD_BRIGHTNESS_UP	    0x13
 #define ACPI_NOTIFY_HIDD_BRIGHTNESS_DOWN    0x14
 
