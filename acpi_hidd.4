@@ -24,41 +24,62 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd June 17, 2022
+.Dd June 21, 2022
 .Dt ACPI_HIDD 4
 .Os
 .Sh NAME
 .Nm acpi_hidd
-.Nd ACPI human interface device subsystem
+.Nd ACPI human interface device driver
 .Sh SYNOPSIS
 .Cd "device acpi_hidd"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides the human interface device features of the ACPI module, in particular
-brightness and media control keyboard support.
+kernel module provides driver services for ACPI HIDD
+hardware, in particular brightness and media control keyboard support.
 .Pp
 The driver has
-.Xr sysctl 8
+.Xr devd 8 ,
+.Xr evdev 4 ,
 and
-.Xr devd 8
+.Xr sysctl 8
 interfaces; the 
 .Xr sysctl 8
-interface allows inspection and control of the screen brightness, and the
+interface allows inspection and control of the screen brightness, the
+.Xr evdev 4
+interface provides a mechanism for applications to directly receive keystrokes
+corresponding to ACPI events, and the
 .Xr devd 8
-interface provides notifications about keypresses that do
-not have support for their functionality built into the driver (such as the media keys).
+interface provides a way to have userland programs run when ACPI keys are pressed.
 .Pp
 .Sh SYSCTL VARIABLES
 .Bl -tag -width indent
 .It Va hw.acpi.hidd.brightness
-The current brightness of the screen; if set, changes the brightness.
-.El
+The current brightness of the screen; when written, changes the brightness.
 .Pp
-The brightness control uses the ACPI BIOS in the same way as the
+The brightness control is performed using the ACPI BIOS in the same way as the
 .Xr acpi_video 4
 driver, and the effect of setting it to a particular value in either driver is
 identical.
+.It Va hw.acpi.hidd.brightness_keycontrol
+
+When set, the keyboard brightness control keys directly increase or decrease
+the screen brightness.  When cleared, the keys only generate
+.Xr evdev 4
+and
+.Xr devd 8
+events, permitting the windowing system or user software to manage the brightness.  This
+variable is writable by any user or program, so it may be changed in an
+.Em .xinit
+script or as otherwise needed.
+.It Va hw.acpi.hidd.brightness_keycontrol_unlock
+When cleared,
+.Em hw.acpi.hidd.brightness_keycontrol
+is immutable.  It may be set in
+.Em /etc/sysctl.conf
+on systems (such as
+laptops) when appropriate.  By default this variable is cleared.
+.El
 .Sh NOTIFICATIONS
 Notifications are passed to userland via
 .Xr devd 8
@@ -79,19 +100,44 @@ driver sends events with the following attributes:
 .It type
 \\_SB_.HID
 .It notify
-An integer assigned to the key by the ACPI Bios.  To determine what integers
+An integer assigned to the key by the ACPI BIOS.  To determine what integers
 are associated with which keys, set \fI hw.acpi.verbose\fP,
 press the keys, and examine the system log.
+.El
+.Pp
+If
+.Em hw.acpi.hidd.brightness_keycontrol
+is set, the brightness control keys will instead generate events with the
+following attributes:
+.Pp
+.Bl -tag -width "subsystem" -compact
+.It system
+.Li ACPI
+.It subsystem
+.Li Video
+.It type
+brightness
+.It notify
+An integer corresponding to the new value of
+.Em hw.acpi.hidd.brightness .
 .El
 .Sh BUGS
 The collection of key codes is very small at this time, comprising only the two that are
 present on the GPD MicroPC.  This does not prevent use of the driver with
 .Xr devd 8 ,
-but contributions from users will make the driver more useful.  Inside the
-driver you'll find a list of key codes and the keys they represent.  Add your
-computer's codes to this list and leave your additions, the make, and model of your
-computer as an issue at
+but contributions from users will make the
+.Xr  evdev 4
+interface more useful.
+Submit your computer's key/code pairs and its make and model as an issue at
 https://github.com/signetica/acpi_hidd.
+.Pp
+For example:
+.Bd -literal -offset indent
+// HIDD keycodes for GPD MicroPC
+#define ACPI_NOTIFY_HIDD_BRIGHTNESS_UP      0x13
+#define ACPI_NOTIFY_HIDD_BRIGHTNESS_DOWN    0x14
+.Ed
+
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr acpi_video 4 ,

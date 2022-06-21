@@ -1,4 +1,5 @@
-/*-
+/*
+ * Copyright (c) 2020 Cyrus Rahman
  * Copyright (c) 2000 Mitsaru IWASAKI <iwasaki@jp.freebsd.org>
  * Copyright (c) 2000 Michael Smith <msmith@freebsd.org>
  * Copyright (c) 2000 BSDi
@@ -54,7 +55,9 @@ struct acpi_hidd_softc {
     device_t	hidd_dev;
     ACPI_HANDLE	hidd_handle;
     int		hidd_brightness;
-#define		ACPI_BRIGHTNESS_INCREMENT    10    // 10% of 0-100
+#define		ACPI_BRIGHTNESS_INCREMENT   10		// 10% of 0-100
+    int		hidd_brightness_keycontrol;
+    int		hidd_brightness_keycontrol_unlock;
 #ifdef EVDEV_SUPPORT
     struct evdev_dev *hidd_evdev;
 #endif
@@ -72,6 +75,7 @@ static int	acpi_hidd_suspend(device_t dev);
 static int	acpi_hidd_resume(device_t dev);
 static void 	acpi_hidd_notify_handler(ACPI_HANDLE h, UINT32 notify, void *context);
 static int	acpi_hidd_brightness_sysctl(SYSCTL_HANDLER_ARGS);
+static int	acpi_hidd_brightness_keycontrol_sysctl(SYSCTL_HANDLER_ARGS);
 
 static device_method_t acpi_hidd_methods[] = {
     /* Device interface */
@@ -119,7 +123,7 @@ acpi_hidd_attach(device_t dev)
     sc = device_get_softc(dev);
     sc->hidd_dev = dev;
     sc->hidd_handle = acpi_get_handle(dev);
-    sc->hidd_brightness = -1;
+    sc->hidd_brightness_keycontrol = 1;
     acpi_sc = acpi_device_get_parent_softc(sc->hidd_dev);
 
     sysctl_ctx_init(&sc->hidd_sysctl_ctx);
@@ -127,9 +131,28 @@ acpi_hidd_attach(device_t dev)
 			  SYSCTL_CHILDREN(acpi_sc->acpi_sysctl_tree),
 			  OID_AUTO, "hidd", CTLFLAG_RW, 0, "ACPI hidd devices");
     SYSCTL_ADD_PROC(&sc->hidd_sysctl_ctx, SYSCTL_CHILDREN(oid),
-		   OID_AUTO, "brightness", CTLTYPE_INT|CTLFLAG_RW|CTLFLAG_MPSAFE,
+		   OID_AUTO, "brightness",
+		   CTLTYPE_INT|CTLFLAG_RW|CTLFLAG_MPSAFE,
 		   sc, 0, acpi_hidd_brightness_sysctl,
 		   "I", "Screen brightness setting (0-100)");
+    SYSCTL_ADD_PROC(&sc->hidd_sysctl_ctx, SYSCTL_CHILDREN(oid),
+		   OID_AUTO, "brightness_keycontrol",
+		   CTLTYPE_INT|CTLFLAG_RW|CTLFLAG_ANYBODY|CTLFLAG_MPSAFE,
+		   sc, 0, acpi_hidd_brightness_keycontrol_sysctl,
+		   "I", "Enable keyboard control of screen brightness");
+    SYSCTL_ADD_INT(&sc->hidd_sysctl_ctx, SYSCTL_CHILDREN(oid),
+		   OID_AUTO, "brightness_keycontrol_unlock", CTLFLAG_RW,
+		   &sc->hidd_brightness_keycontrol_unlock, 0,
+		   "Unlock hw.acpi.hidd.hidd_brightness_keycontrol");
+
+    status = AcpiInstallNotifyHandler(sc->hidd_handle, ACPI_DEVICE_NOTIFY,
+				      acpi_hidd_notify_handler, sc);
+    if (ACPI_FAILURE(status)) {
+	device_printf(sc->hidd_dev, "couldn't install notify handler - %s\n",
+		      AcpiFormatException(status));
+	sysctl_ctx_free(&sc->hidd_sysctl_ctx);
+	return_VALUE (ENXIO);
+    }
 
 #ifdef EVDEV_SUPPORT
     sc->hidd_evdev = evdev_alloc();
@@ -140,17 +163,14 @@ acpi_hidd_attach(device_t dev)
     evdev_support_key(sc->hidd_evdev, KEY_BRIGHTNESSDOWN);
     evdev_support_key(sc->hidd_evdev, KEY_BRIGHTNESSUP);
 
-    if (evdev_register(sc->hidd_evdev))
-        return (ENXIO);
-#endif
-
-    status = AcpiInstallNotifyHandler(sc->hidd_handle, ACPI_DEVICE_NOTIFY,
-				      acpi_hidd_notify_handler, sc);
-    if (ACPI_FAILURE(status)) {
-	device_printf(sc->hidd_dev, "couldn't install notify handler - %s\n",
-		      AcpiFormatException(status));
+    if (evdev_register(sc->hidd_evdev)) {
+	evdev_free(sc->hidd_evdev);
+	AcpiRemoveNotifyHandler(sc->hidd_handle, ACPI_DEVICE_NOTIFY,
+				acpi_hidd_notify_handler);
+	sysctl_ctx_free(&sc->hidd_sysctl_ctx);
 	return_VALUE (ENXIO);
     }
+#endif
 
     return_VALUE (0);
 }
@@ -164,6 +184,7 @@ acpi_hidd_detach(device_t dev)
     ACPI_FUNCTION_TRACE((char *)(uintptr_t)__func__);
 
     sc = device_get_softc(dev);
+    sysctl_ctx_free(&sc->hidd_sysctl_ctx);
 
 #ifdef EVDEV_SUPPORT
     evdev_free(sc->hidd_evdev);
@@ -176,8 +197,6 @@ acpi_hidd_detach(device_t dev)
 		      AcpiFormatException(status));
 	return_VALUE (ENXIO);
     }
-
-    sysctl_ctx_free(&sc->hidd_sysctl_ctx);
 
     return_VALUE (0);
 }
@@ -204,6 +223,7 @@ acpi_hidd_notify_handler(ACPI_HANDLE h, UINT32 notify, void *context)
 #endif
     ACPI_STATUS status;
     int hidd_hidm;
+    char notify_buf[16];
 
     ACPI_FUNCTION_TRACE_U32((char *)(uintptr_t)__func__, notify);
 
@@ -218,24 +238,29 @@ acpi_hidd_notify_handler(ACPI_HANDLE h, UINT32 notify, void *context)
     }
 
     ACPI_VPRINT(sc->hidd_dev, acpi_sc, "hidd code %#x\n", hidd_hidm);
-    switch (hidd_hidm) {
-    case ACPI_NOTIFY_HIDD_BRIGHTNESS_UP:
-	acpi_GetInteger(sc->hidd_handle, "\\_SB.DPLY._BQC", &sc->hidd_brightness);
-	sc->hidd_brightness += ACPI_BRIGHTNESS_INCREMENT;
-	sc->hidd_brightness = sc->hidd_brightness > 100 ? 100 : sc->hidd_brightness;
-	acpi_SetInteger(sc->hidd_handle, "\\_SB.DPLY._BCM", sc->hidd_brightness);
-	break;
-    case ACPI_NOTIFY_HIDD_BRIGHTNESS_DOWN:
-	acpi_GetInteger(sc->hidd_handle, "\\_SB.DPLY._BQC", &sc->hidd_brightness);
-	sc->hidd_brightness -= ACPI_BRIGHTNESS_INCREMENT;
-	sc->hidd_brightness = sc->hidd_brightness < 0 ? 0 : sc->hidd_brightness;
-	acpi_SetInteger(sc->hidd_handle, "\\_SB.DPLY._BCM", sc->hidd_brightness);
-	break;
-    default:
-	acpi_UserNotify("HIDD", h, hidd_hidm);	    	// Notify devd(8)
-    }
+    if (sc->hidd_brightness_keycontrol &&
+	(hidd_hidm == ACPI_NOTIFY_HIDD_BRIGHTNESS_UP ||
+	 hidd_hidm == ACPI_NOTIFY_HIDD_BRIGHTNESS_DOWN)) {
+	    acpi_GetInteger(sc->hidd_handle, "\\_SB.DPLY._BQC", &sc->hidd_brightness);
+	    if (hidd_hidm == ACPI_NOTIFY_HIDD_BRIGHTNESS_UP) {
+		sc->hidd_brightness += ACPI_BRIGHTNESS_INCREMENT;
+		sc->hidd_brightness =
+		    sc->hidd_brightness > 100 ? 100 : sc->hidd_brightness;
+	    } else {
+		sc->hidd_brightness -= ACPI_BRIGHTNESS_INCREMENT;
+		sc->hidd_brightness =
+		    sc->hidd_brightness < 0 ? 0 : sc->hidd_brightness;
+	    }
+	    acpi_SetInteger(sc->hidd_handle, "\\_SB.DPLY._BCM", sc->hidd_brightness);
+
+	    // Keep devd(8) notification consistent with acpi_video.c
+	    snprintf(notify_buf, sizeof(notify_buf), "notify=%d", sc->hidd_brightness);
+	    devctl_notify("ACPI", "Video", "brightness", notify_buf);
+    } else
+	    acpi_UserNotify("HIDD", h, hidd_hidm);
 
 #ifdef EVDEV_SUPPORT
+    // Support for media keys should go here.
     switch (hidd_hidm) {
     case ACPI_NOTIFY_HIDD_BRIGHTNESS_UP:
 	key = KEY_BRIGHTNESSUP;
@@ -259,8 +284,9 @@ nokey:
 static int
 acpi_hidd_brightness_sysctl(SYSCTL_HANDLER_ARGS)
 {
-    struct acpi_hidd_softc	*sc;
+    struct acpi_hidd_softc *sc;
     int brightness, error;
+    char notify_buf[16];
 
     sc = (struct acpi_hidd_softc *)arg1;
     acpi_GetInteger(sc->hidd_handle, "\\_SB.DPLY._BQC", &sc->hidd_brightness);
@@ -274,6 +300,39 @@ acpi_hidd_brightness_sysctl(SYSCTL_HANDLER_ARGS)
 
     sc->hidd_brightness = brightness;
     acpi_SetInteger(sc->hidd_handle, "\\_SB.DPLY._BCM", sc->hidd_brightness);
+
+    snprintf(notify_buf, sizeof(notify_buf), "notify=%d", sc->hidd_brightness);
+    devctl_notify("ACPI", "Video", "brightness", notify_buf);
+
+    return_VALUE (0);
+} 
+
+/*
+ * The hw.acpi.hidd.hidd_brightness_keycontrol_unlock sysctl will unlock
+ * hw.acpi.hidd.hidd_brightness_keycontrol if set.
+ *
+ * If unlocked, the hidd_brightness_keycontrol sysctl is writable by any user or
+ * process.  This allows a user to adjust it according to the demands of their
+ * windowing system.
+ *
+ * On a server this facility might be undesirable, so by default the sysctl is
+ * locked.
+ */
+static int
+acpi_hidd_brightness_keycontrol_sysctl(SYSCTL_HANDLER_ARGS) {
+    struct acpi_hidd_softc	*sc;
+    int keycontrol, error;
+
+    sc = (struct acpi_hidd_softc *)arg1;
+
+    keycontrol = sc->hidd_brightness_keycontrol;
+    error = sysctl_handle_int(oidp, &keycontrol, 0, req);
+    if (error != 0 || req->newptr == NULL)
+	return (error);
+    if (!sc->hidd_brightness_keycontrol_unlock)
+	return (EPERM);
+
+    sc->hidd_brightness_keycontrol = keycontrol;
 
     return_VALUE (0);
 }
