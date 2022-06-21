@@ -55,7 +55,7 @@ struct acpi_hidd_softc {
     device_t	hidd_dev;
     ACPI_HANDLE	hidd_handle;
     int		hidd_brightness;
-#define		ACPI_BRIGHTNESS_INCREMENT   10		// 10% of 0-100
+#define		ACPI_BRIGHTNESS_INCREMENT   5		// 5% of 0-100
     int		hidd_brightness_keycontrol;
     int		hidd_brightness_keycontrol_unlock;
 #ifdef EVDEV_SUPPORT
