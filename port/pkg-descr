@@ -1,10 +1,10 @@
 The acpi_hidd kernel module provides driver services for ACPI HIDD
 hardware, in particular brightness and media control keyboard support.
 
-The driver has devd(8), evdev(4), and sysctl(8) interfaces; the sysctl(8) interface
-allows inspection and control of the screen brightness, the evdev(4) interface
-allows applications to directly receive keystrokes corresponding to ACPI events, and
-the devd(8) interface provides a way to have userland programs run when ACPI
-keys are pressed.
+The driver has devd(8), evdev(4), and sysctl(8) interfaces; the sysctl(8)
+interface allows inspection and control of the screen brightness, the evdev(4)
+interface allows applications to directly receive keystrokes corresponding to
+ACPI events, and the devd(8) interface provides a way to have userland
+programs run when ACPI keys are pressed.
 
-WWW: www.github.com/signetica/acpi_hidd
+WWW: https://www.github.com/signetica/acpi_hidd

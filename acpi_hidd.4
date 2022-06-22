@@ -88,7 +88,7 @@ Notifications are passed to userland via
 and
 .Xr devd.conf 5
 for examples.
-The
+When an ACPI key is pressed, the
 .Nm
 driver sends events with the following attributes:
 .Pp
@@ -122,6 +122,27 @@ An integer corresponding to the new value of
 .Em hw.acpi.hidd.brightness .
 .El
 .Sh BUGS
+.Nm
+only manages the ACPI BIOS's primary monitor's brightness.  Use
+.Xr acpi_video 4
+and the
+.Xr evdev 4
+or
+.Xr devd 8
+interfaces to manage other displays.
+.Pp
+The
+.Xr acpi_video 4
+driver assumes that nothing else changes the ACPI BIOS brightness, and uses a
+cached value instead of asking the ACPI BIOS before reporting it through its
+.Xr sysctl 8 .
+To avoid confusion, when a system such as a window manager is managing the screen
+brightness, set
+\fIhw.acpi.hidd.brightness_keycontrol\fP=0,
+and do not write directly to
+.Em hw.acpi.hidd.brightness
+to adjust the brightness.
+.Pp
 The collection of key codes is very small at this time, comprising only the two that are
 present on the GPD MicroPC.  This does not prevent use of the driver with
 .Xr devd 8 ,
@@ -129,7 +150,8 @@ but contributions from users will make the
 .Xr  evdev 4
 interface more useful.
 Submit your computer's key/code pairs and its make and model as an issue at
-https://github.com/signetica/acpi_hidd.
+\fIhttps://github.com/signetica/acpi_hidd\fP.
+More detailed instructions are in the repository.
 .Pp
 For example:
 .Bd -literal -offset indent
