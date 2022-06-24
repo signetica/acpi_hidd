@@ -1,4 +1,4 @@
-/*
+/*-
  * Copyright (c) 2020 Cyrus Rahman
  * Copyright (c) 2000 Mitsaru IWASAKI <iwasaki@jp.freebsd.org>
  * Copyright (c) 2000 Michael Smith <msmith@freebsd.org>
@@ -55,7 +55,7 @@ struct acpi_hidd_softc {
     device_t	hidd_dev;
     ACPI_HANDLE	hidd_handle;
     int		hidd_brightness;
-#define		ACPI_BRIGHTNESS_INCREMENT   5		// 5% of 0-100
+#define		ACPI_BRIGHTNESS_INCREMENT   5		/* 5% of 0-100 */
     int		hidd_brightness_keycontrol;
     int		hidd_brightness_keycontrol_unlock;
 #ifdef EVDEV_SUPPORT
@@ -64,7 +64,7 @@ struct acpi_hidd_softc {
     struct sysctl_ctx_list  hidd_sysctl_ctx;
 };
 
-// HIDD keycodes for GPD MicroPC
+/* HIDD keycodes for GPD MicroPC */
 #define ACPI_NOTIFY_HIDD_BRIGHTNESS_UP	    0x13
 #define ACPI_NOTIFY_HIDD_BRIGHTNESS_DOWN    0x14
 
@@ -253,14 +253,14 @@ acpi_hidd_notify_handler(ACPI_HANDLE h, UINT32 notify, void *context)
 	    }
 	    acpi_SetInteger(sc->hidd_handle, "\\_SB.DPLY._BCM", sc->hidd_brightness);
 
-	    // Keep devd(8) notification consistent with acpi_video.c
+	    /* Keep devd(8) notification consistent with acpi_video.c */
 	    snprintf(notify_buf, sizeof(notify_buf), "notify=%d", sc->hidd_brightness);
 	    devctl_notify("ACPI", "Video", "brightness", notify_buf);
     } else
 	    acpi_UserNotify("HIDD", h, hidd_hidm);
 
 #ifdef EVDEV_SUPPORT
-    // Support for media keys should go here.
+    /* Support for media keys should go here. */
     switch (hidd_hidm) {
     case ACPI_NOTIFY_HIDD_BRIGHTNESS_UP:
 	key = KEY_BRIGHTNESSUP;
