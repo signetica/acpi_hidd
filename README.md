@@ -42,7 +42,7 @@ instructions to run an external program to do something when the key is pressed.
 # Installation
 
 This driver can be installed directly via 'make; make install', or as a port
-by changing into the *port* directory and doing the same thing; the latter,
+by changing into the inner *apci_hidd* directory and doing the same thing; the latter,
 however, allowing you to set an option to provide evdev(4) support.  You will
 want evdev(4) support unless you are running a kernel from which you have removed this
 support.
