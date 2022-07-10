@@ -1,7 +1,7 @@
 # Created by: Cyrus Rahman <crahman@gmail.com>
 
 PORTNAME=	acpi_hidd
-DISTVERSION=	1.1.0
+DISTVERSION=	1.1.2
 CATEGORIES=	sysutils
 
 MAINTAINER=	crahman@gmail.com
