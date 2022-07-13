@@ -41,14 +41,25 @@ instructions to run an external program to do something when the key is pressed.
 
 # Installation
 
-This driver can be installed directly via 'make; make install', or as a port
-by changing into the inner *apci_hidd* directory and doing the same thing; the latter,
-however, allowing you to set an option to provide evdev(4) support.  You will
-want evdev(4) support unless you are running a kernel from which you have removed this
-support.
+This driver can be installed directly via:
 
-If you choose to build using the port Makefile, you'll have to run 'make
-makesum' to produce the distfile before the port will build.
+	make; make install
 
-Then add 'acpi_hidd_load="YES"' to /boot/loader.conf, and load the driver via
+or, if you need evdev support:
+
+	make CONF_CFLAGS=-DEVDEV_SUPPORT; make install
+
+You may also install it as a port by unpacking apci_hidd.shar, changing into the
+*new* acpi_hidd directory, and building it in the usual fashion, this procedure,
+however, allowing you to set an option to provide evdev(4) support:
+
+	sh acpi_hidd.shar
+	cd acpi_hidd
+	make makesum
+	make install
+
+You will want evdev(4) support unless you are running a kernel from which you
+have removed this support.
+
+Finally, add 'acpi_hidd_load="YES"' to /boot/loader.conf, and load the driver via
 'kldload acpi_hidd' (or a reboot).
