@@ -50,7 +50,7 @@ or, if you need evdev support:
 	make CONF_CFLAGS=-DEVDEV_SUPPORT; make install
 
 You may also install it as a port by unpacking apci_hidd.shar, changing into the
-*new* acpi_hidd directory, and building it in the usual fashion, this procedure,
+resulting *acpi_hidd* directory, and building it in the usual fashion; this procedure,
 however, allowing you to set an option to provide evdev(4) support:
 
 	sh acpi_hidd.shar
