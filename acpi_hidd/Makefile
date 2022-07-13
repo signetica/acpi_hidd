@@ -1,11 +1,11 @@
 # Created by: Cyrus Rahman <crahman@gmail.com>
 
 PORTNAME=	acpi_hidd
-DISTVERSION=	1.1.2
+DISTVERSION=	1.1.3
 CATEGORIES=	sysutils
 
 MAINTAINER=	crahman@gmail.com
-COMMENT=	Provide basic ACPI HID kernel services
+COMMENT=	Provide APIC HID kernel services, e.g. brightness & media control keys.
 
 LICENSE=	BSD2CLAUSE
 
