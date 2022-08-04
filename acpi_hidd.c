@@ -282,7 +282,7 @@ nokey:
 	return_VOID;
 }
 
-/* TODO: Make in interface in acpi_video.c and use it instead. */
+/* TODO: Make an interface in acpi_video.c and use it instead. */
 static int
 acpi_hidd_brightness_sysctl(SYSCTL_HANDLER_ARGS)
 {
