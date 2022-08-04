@@ -63,3 +63,10 @@ have removed this support.
 
 Finally, add 'acpi_hidd_load="YES"' to /boot/loader.conf, and load the driver via
 'kldload acpi_hidd' (or a reboot).
+
+# Additional Items
+
+For more information related to FreeBSD on the GPD MicroPC, and in particular for
+more information regarding rotating FreeBSD's console and boot loader screens
+between landmark and portrait mode, please see the FreeBSD GPD MicroPC page at
+https://wiki.freebsd.org/Laptops/GPD_MicroPC
