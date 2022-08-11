@@ -114,9 +114,9 @@ static int
 acpi_hidd_attach(device_t dev)
 {
 	struct acpi_hidd_softc	*sc;
-	struct acpi_softc		*acpi_sc;
-	struct sysctl_oid		*oid;
-	ACPI_STATUS			status;
+	struct acpi_softc	*acpi_sc;
+	struct sysctl_oid	*oid;
+	ACPI_STATUS		status;
 
 	ACPI_FUNCTION_TRACE((char *)(uintptr_t)__func__);
 
@@ -178,7 +178,7 @@ static int
 acpi_hidd_detach(device_t dev)
 {
 	struct acpi_hidd_softc	*sc;
-	ACPI_STATUS			status;
+	ACPI_STATUS		status;
 
 	ACPI_FUNCTION_TRACE((char *)(uintptr_t)__func__);
 
@@ -215,8 +215,8 @@ acpi_hidd_resume(device_t dev)
 static void 
 acpi_hidd_notify_handler(ACPI_HANDLE h, UINT32 notify, void *context)
 {
-	struct acpi_hidd_softc  *sc;
-	struct acpi_softc	    *acpi_sc;
+	struct acpi_hidd_softc	*sc;
+	struct acpi_softc	*acpi_sc;
 #ifdef EVDEV_SUPPORT
 	uint16_t key;
 #endif
