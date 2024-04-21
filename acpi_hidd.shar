@@ -5,7 +5,7 @@ mkdir -p acpi_hidd > /dev/null 2>&1
 echo x acpi_hidd/pkg-plist
 sed 's/^X//' > acpi_hidd/pkg-plist << 'SHAR_END'
 X/%%KMODDIR%%/acpi_hidd.ko
-Xman/man4/acpi_hidd.4.gz
+Xshare/man/man4/acpi_hidd.4.gz
 SHAR_END
 echo x acpi_hidd/pkg-descr
 sed 's/^X//' > acpi_hidd/pkg-descr << 'SHAR_END'
@@ -23,7 +23,7 @@ sed 's/^X//' > acpi_hidd/Makefile << 'SHAR_END'
 X# Created by: Cyrus Rahman <crahman@gmail.com>
 X
 XPORTNAME=	acpi_hidd
-XDISTVERSION=	1.1.5
+XDISTVERSION=	1.1.6
 XCATEGORIES=	sysutils
 X
 XMAINTAINER=	crahman@gmail.com
@@ -46,7 +46,7 @@ XEVDEV_SUPPORT_DESC=	Enable evdev/libinput support
 XEVDEV_SUPPORT_CFLAGS=	-DEVDEV_SUPPORT
 X
 Xpre-install:
-X	${INSTALL_MAN} ${WRKSRC}/acpi_hidd.4 ${STAGEDIR}${MANPREFIX}/man/man4
+X	${INSTALL_MAN} ${WRKSRC}/acpi_hidd.4 ${STAGEDIR}${PREFIX}/share/man/man4
 X
 X.include <bsd.port.mk>
 SHAR_END
