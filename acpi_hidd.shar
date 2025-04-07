@@ -23,7 +23,7 @@ sed 's/^X//' > acpi_hidd/Makefile << 'SHAR_END'
 X# Created by: Cyrus Rahman <crahman@gmail.com>
 X
 XPORTNAME=	acpi_hidd
-XDISTVERSION=	1.1.6
+XDISTVERSION=	1.1.7
 XCATEGORIES=	sysutils
 X
 XMAINTAINER=	crahman@gmail.com
