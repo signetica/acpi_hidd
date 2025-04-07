@@ -93,8 +93,7 @@ static driver_t acpi_hidd_driver = {
 	sizeof(struct acpi_hidd_softc),
 };
 
-static devclass_t acpi_hidd_devclass;
-DRIVER_MODULE(acpi_hidd, acpi, acpi_hidd_driver, acpi_hidd_devclass, 0, 0);
+DRIVER_MODULE(acpi_hidd, acpi, acpi_hidd_driver, 0, 0);
 
 static int
 acpi_hidd_probe(device_t dev)
